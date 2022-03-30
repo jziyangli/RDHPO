@@ -1,0 +1,67 @@
+{
+ "TrainData": "C:\\Users\\alexgarcia98\\Desktop\\CSC569\\finalProject\\csc569_Final_Project\\datasets\\mnist_train.csv",
+ "TestData": "C:\\Users\\alexgarcia98\\Desktop\\CSC569\\finalProject\\csc569_Final_Project\\datasets\\mnist_test.csv",
+ "ModelCount": 3,
+ "Models": [
+  {
+   "ModelID": 0,
+   "Name": "Neural Network",
+   "NumHiddenLayers": 4,
+   "NumEpochs": 25,
+   "LearningRate": 0.005,
+   "Momentum": 0.0005,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 1,
+   "Name": "Neural Network",
+   "NumHiddenLayers": 3,
+   "NumEpochs": 25,
+   "LearningRate": 0.005,
+   "Momentum": 0.0005,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 2,
+   "Name": "Neural Network",
+   "NumHiddenLayers": 2,
+   "NumEpochs": 5,
+   "LearningRate": 0.3,
+   "Momentum": 0.2,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "NumHiddenLayers": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "NumHiddenLayers": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  }
+ ]
+}

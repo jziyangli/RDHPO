@@ -1,0 +1,31 @@
+References
+
+cortex: https://github.com/cortexlabs/cortex
+
+https://docs.huihoo.com/go/fast-and-scalable-machine-learning-with-golang.pdf
+
+http://www.fodop.com/ar-1002 
+
+https://github.com/sjwhitworth/golearn
+
+https://github.com/josephmisiti/awesome-machine-learning#general-purpose-machine-learning-8
+
+http://yann.lecun.com/exdb/mnist/
+
+
+User Input
+- path to data file
+- specify which models to run and hyperparameter range
+    - some sort of struct
+    
+golearn
+  - knn
+  - gradient descent
+  - linear SVC
+  - general NN
+  - decision tree
+
+Data formating for CSV
+- 2 datasets per model (1 training, 1 test)
+- first row of CSV is header
+- first column is labels

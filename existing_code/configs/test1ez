@@ -1,0 +1,77 @@
+{
+ "TrainData": "/Users/evanzhang/Desktop/Fall 2020/csc569/finalproject/datasets/mnist_train_short.csv",
+ "TestData": "/Users/evanzhang/Desktop/Fall 2020/csc569/finalproject/datasets/mnist_train_short.csv",
+ "ModelCount": 1,
+ "Models": [
+  {
+   "ModelID": 0,
+   "Name": "Neural Network",
+   "InputNodes": 0,
+   "NumHiddenLayers": 3,
+   "OutputNodes": 10,
+   "NumEpochs": 10,
+   "LearningRate": 0.005,
+   "Momentum": 0.0005,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  }
+ ]
+}

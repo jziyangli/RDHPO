@@ -1,0 +1,77 @@
+{
+ "TrainData": "",
+ "TestData": "",
+ "ModelCount": 2,
+ "Models": [
+  {
+   "ModelID": 0,
+   "Name": "Model 1",
+   "InputNodes": 5,
+   "NumHiddenLayers": 3,
+   "OutputNodes": 6,
+   "NumEpochs": 10,
+   "LearningRate": 0.5,
+   "Momentum": 9.5,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 1,
+   "Name": "Model 2",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 8,
+   "Learning": "0.3",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  },
+  {
+   "ModelID": 0,
+   "Name": "",
+   "InputNodes": 0,
+   "NumHiddenLayers": 0,
+   "OutputNodes": 0,
+   "NumEpochs": 0,
+   "LearningRate": 0,
+   "Momentum": 0,
+   "Layers": 0,
+   "Learning": "",
+   "Trees": 0,
+   "MaxDepth": 0
+  }
+ ]
+}
