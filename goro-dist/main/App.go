@@ -7,39 +7,40 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	//"test/go/pkg/mod/github.com/dathoangnd/gonet@v1.0.1"
-
-	"github.com/aunum/gold/pkg/v1/common/num"
+	/*"github.com/aunum/gold/pkg/v1/common/num"
 	"github.com/aunum/gold/pkg/v1/common/require"
 	"github.com/aunum/gold/pkg/v1/dense"
-	"github.com/aunum/goro/pkg/v1/layer"
 	mo "github.com/aunum/goro/pkg/v1/model"
+
+	"gorgonia.org/tensor"*/
+
+	"test/go/pkg/mod/github.com/stretchr/testify@v1.6.1/require"
+
+	_ "github.com/andlabs/ui/winmanifest"
 	"github.com/aunum/log"
 
 	//"gorgonia.org/gorgonia/examples/mnist"
+	"mnist"
 
-	g "gorgonia.org/gorgonia"
-	"gorgonia.org/tensor"
-
-	"github.com/andlabs/ui"
-	_ "github.com/andlabs/ui/winmanifest"
-
-	//"gorgonia.org/gorgonia/examples/mnist"
 	"github.com/c-bata/goptuna"
 	"github.com/c-bata/goptuna/successivehalving"
 	"github.com/c-bata/goptuna/tpe"
 	"golang.org/x/sync/errgroup"
 
-	"mnist"
+	"github.com/aunum/gold/pkg/v1/common/num"
+	"github.com/aunum/gold/pkg/v1/dense"
+	"github.com/aunum/goro/pkg/v1/layer"
+	mo "github.com/aunum/goro/pkg/v1/model"
+	"github.com/aunum/log"
+	g "gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 type UIWindow struct {
@@ -72,557 +73,6 @@ type Model2Params struct {
 type Model3Params struct {
 	Trees    int
 	MaxDepth int
-}
-
-var mainwin *ui.Window
-var modelCount int = 0
-var models []ui.Control = make([]ui.Control, 5)
-var windowData UIWindow
-var results *ui.Grid
-var resList []*ui.Label = make([]*ui.Label, 35)
-var pbar *ui.ProgressBar
-
-func makeModelParam(m ModelConfig) ui.Control {
-	hbox := ui.NewHorizontalBox()
-	hbox.SetPadded(true)
-
-	grid := ui.NewGrid()
-	grid.SetPadded(true)
-
-	hbox.Append(grid, false)
-
-	form := ui.NewForm()
-	form.SetPadded(true)
-	grid.Append(form,
-		0, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-
-	initial := 0
-	if m.Name == "Model 2" {
-		initial = 1
-	}
-	if m.Name == "Model 3" {
-		initial = 2
-	}
-	alignment := ui.NewCombobox()
-	// note that the items match with the values of the uiDrawTextAlign values
-	alignment.Append("Neural Network")
-	alignment.Append("Model 2")
-	alignment.Append("Model 3")
-	alignment.SetSelected(initial)
-	alignment.OnSelected(func(*ui.Combobox) {
-		s := alignment.Selected()
-		if s == 0 {
-			windowData.Models[m.ModelID].Name = "Neural Network"
-			hbox1 := ui.NewHorizontalBox()
-			hbox1.SetPadded(true)
-			grid.Append(hbox1,
-				0, 1, 1, 1,
-				false, ui.AlignFill, false, ui.AlignFill)
-
-			// # of hidden layers
-			layers := ui.NewSpinbox(0, 10000)
-			layers.OnChanged(func(*ui.Spinbox) {
-				windowData.Models[m.ModelID].NumHiddenLayers = layers.Value()
-			})
-
-			form2 := ui.NewForm()
-			form2.SetPadded(true)
-			hbox1.Append(form2, false)
-			form2.Append("# Hidden Layers", layers, false)
-
-			// # of epochs
-			epochs := ui.NewSpinbox(0, 10000)
-			epochs.OnChanged(func(*ui.Spinbox) {
-				windowData.Models[m.ModelID].NumEpochs = epochs.Value()
-			})
-
-			form4 := ui.NewForm()
-			form4.SetPadded(true)
-			hbox1.Append(form4, false)
-			form4.Append("# of Epochs", epochs, false)
-
-			// learning rate
-			lrate := ui.NewEntry()
-			windowData.Models[m.ModelID].LearningRate = 0.0
-			lrate.OnChanged(func(*ui.Entry) {
-				f, err := strconv.ParseFloat(lrate.Text(), 64)
-				if err == nil {
-					windowData.Models[m.ModelID].LearningRate = f
-				} else {
-					ui.MsgBoxError(mainwin,
-						"Not a Number.",
-						"Please enter a numerical value.")
-					lrate.SetText("")
-				}
-			})
-
-			form5 := ui.NewForm()
-			form5.SetPadded(true)
-			hbox1.Append(form5, false)
-			form5.Append("Learning Rate", lrate, false)
-
-			// momentum
-			momentum := ui.NewEntry()
-			windowData.Models[m.ModelID].Momentum = 0.0
-			momentum.OnChanged(func(*ui.Entry) {
-				f, err := strconv.ParseFloat(momentum.Text(), 64)
-				if err == nil {
-					windowData.Models[m.ModelID].Momentum = f
-				} else {
-					ui.MsgBoxError(mainwin,
-						"Not a Number.",
-						"Please enter a numerical value.")
-					momentum.SetText("")
-				}
-			})
-
-			form6 := ui.NewForm()
-			form6.SetPadded(true)
-			hbox1.Append(form6, false)
-			form6.Append("Momentum", momentum, false)
-			// end
-		} else if s == 1 {
-			windowData.Models[m.ModelID].Name = "Model 2"
-			hbox1 := ui.NewHorizontalBox()
-			hbox1.SetPadded(true)
-			grid.Append(hbox1,
-				0, 1, 1, 1,
-				false, ui.AlignFill, false, ui.AlignFill)
-
-			// layers and learning rate
-			layers := ui.NewSpinbox(0, 10000)
-			layers.OnChanged(func(*ui.Spinbox) {
-				windowData.Models[m.ModelID].Layers = layers.Value()
-			})
-
-			form2 := ui.NewForm()
-			form2.SetPadded(true)
-			hbox1.Append(form2, false)
-			form2.Append("numLayers", layers, false)
-
-			lrate := ui.NewEntry()
-			lrate.SetText("0.1")
-			windowData.Models[m.ModelID].Learning = "0.1"
-			lrate.OnChanged(func(*ui.Entry) {
-				windowData.Models[m.ModelID].Learning = lrate.Text()
-			})
-
-			form1 := ui.NewForm()
-			form1.SetPadded(true)
-			hbox1.Append(form1, false)
-			form1.Append("learning rate", lrate, false)
-		} else {
-			windowData.Models[m.ModelID].Name = "Model 3"
-			hbox1 := ui.NewHorizontalBox()
-			hbox1.SetPadded(true)
-			grid.Append(hbox1,
-				0, 1, 1, 1,
-				false, ui.AlignFill, false, ui.AlignFill)
-			// numTrees and max depth
-			numTrees := ui.NewSpinbox(0, 10000)
-			numTrees.OnChanged(func(*ui.Spinbox) {
-				windowData.Models[m.ModelID].Trees = numTrees.Value()
-			})
-
-			form1 := ui.NewForm()
-			form1.SetPadded(true)
-			hbox1.Append(form1, false)
-			form1.Append("numTrees", numTrees, false)
-
-			maxDepth := ui.NewSpinbox(0, 10000)
-			maxDepth.OnChanged(func(*ui.Spinbox) {
-				windowData.Models[m.ModelID].MaxDepth = maxDepth.Value()
-			})
-
-			form2 := ui.NewForm()
-			form2.SetPadded(true)
-			hbox1.Append(form2, false)
-			form2.Append("maxDepth", maxDepth, false)
-		}
-	})
-
-	if m.Name == "Neural Network" {
-		hbox1 := ui.NewHorizontalBox()
-		hbox1.SetPadded(true)
-		grid.Append(hbox1,
-			0, 1, 1, 1,
-			false, ui.AlignFill, false, ui.AlignFill)
-
-		// # of hidden layers
-		layers := ui.NewSpinbox(0, 10000)
-		layers.SetValue(windowData.Models[m.ModelID].NumHiddenLayers)
-		layers.OnChanged(func(*ui.Spinbox) {
-			windowData.Models[m.ModelID].NumHiddenLayers = layers.Value()
-		})
-
-		form2 := ui.NewForm()
-		form2.SetPadded(true)
-		hbox1.Append(form2, false)
-		form2.Append("# Hidden Layers", layers, false)
-
-		// # of epochs
-		epochs := ui.NewSpinbox(0, 10000)
-		epochs.SetValue(windowData.Models[m.ModelID].NumEpochs)
-		epochs.OnChanged(func(*ui.Spinbox) {
-			windowData.Models[m.ModelID].NumEpochs = epochs.Value()
-		})
-
-		form4 := ui.NewForm()
-		form4.SetPadded(true)
-		hbox1.Append(form4, false)
-		form4.Append("# of Epochs", epochs, false)
-
-		// learning rate
-		lrate := ui.NewEntry()
-		s := strconv.FormatFloat(windowData.Models[m.ModelID].LearningRate, 'g', -1, 64)
-		lrate.SetText(s)
-		lrate.OnChanged(func(*ui.Entry) {
-			f, err := strconv.ParseFloat(lrate.Text(), 64)
-			if err == nil {
-				windowData.Models[m.ModelID].LearningRate = f
-			} else {
-				ui.MsgBoxError(mainwin,
-					"Not a Number.",
-					"Please enter a numerical value.")
-				lrate.SetText("")
-			}
-		})
-
-		form5 := ui.NewForm()
-		form5.SetPadded(true)
-		hbox1.Append(form5, false)
-		form5.Append("Learning Rate", lrate, false)
-
-		// momentum
-		momentum := ui.NewEntry()
-		s = strconv.FormatFloat(windowData.Models[m.ModelID].Momentum, 'g', -1, 64)
-		momentum.SetText(s)
-		momentum.OnChanged(func(*ui.Entry) {
-			f, err := strconv.ParseFloat(momentum.Text(), 64)
-			if err == nil {
-				windowData.Models[m.ModelID].Momentum = f
-			} else {
-				ui.MsgBoxError(mainwin,
-					"Not a Number.",
-					"Please enter a numerical value.")
-				momentum.SetText("")
-			}
-		})
-
-		form6 := ui.NewForm()
-		form6.SetPadded(true)
-		hbox1.Append(form6, false)
-		form6.Append("Momentum", momentum, false)
-	} else if m.Name == "Model 2" {
-		hbox1 := ui.NewHorizontalBox()
-		hbox1.SetPadded(true)
-		grid.Append(hbox1,
-			0, 1, 1, 1,
-			false, ui.AlignFill, false, ui.AlignFill)
-		// layers and learning rate
-		layers := ui.NewSpinbox(0, 10000)
-		layers.SetValue(windowData.Models[m.ModelID].Layers)
-		layers.OnChanged(func(*ui.Spinbox) {
-			windowData.Models[m.ModelID].Layers = layers.Value()
-		})
-
-		form2 := ui.NewForm()
-		form2.SetPadded(true)
-		hbox1.Append(form2, false)
-		form2.Append("numLayers", layers, false)
-
-		lrate := ui.NewEntry()
-		lrate.SetText(windowData.Models[m.ModelID].Learning)
-		lrate.OnChanged(func(*ui.Entry) {
-			windowData.Models[m.ModelID].Learning = lrate.Text()
-		})
-
-		form1 := ui.NewForm()
-		form1.SetPadded(true)
-		hbox1.Append(form1, false)
-		form1.Append("learning rate", lrate, false)
-	} else if m.Name == "Model 3" {
-		hbox1 := ui.NewHorizontalBox()
-		hbox1.SetPadded(true)
-		grid.Append(hbox1,
-			0, 1, 1, 1,
-			false, ui.AlignFill, false, ui.AlignFill)
-		// numTrees and max depth
-		numTrees := ui.NewSpinbox(0, 10000)
-		numTrees.SetValue(windowData.Models[m.ModelID].Trees)
-		numTrees.OnChanged(func(*ui.Spinbox) {
-			windowData.Models[m.ModelID].Trees = numTrees.Value()
-		})
-
-		form1 := ui.NewForm()
-		form1.SetPadded(true)
-		hbox1.Append(form1, false)
-		form1.Append("numTrees", numTrees, false)
-
-		maxDepth := ui.NewSpinbox(0, 10000)
-		maxDepth.SetValue(windowData.Models[m.ModelID].MaxDepth)
-		maxDepth.OnChanged(func(*ui.Spinbox) {
-			windowData.Models[m.ModelID].MaxDepth = maxDepth.Value()
-		})
-
-		form2 := ui.NewForm()
-		form2.SetPadded(true)
-		hbox1.Append(form2, false)
-		form2.Append("maxDepth", maxDepth, false)
-	}
-
-	form.Append("Model", alignment, false)
-
-	return hbox
-}
-
-func generateFromState() *ui.Grid {
-	grid := ui.NewGrid()
-	grid.SetPadded(true)
-
-	button := ui.NewButton("Training Data")
-	entry := ui.NewEntry()
-	entry.SetReadOnly(true)
-	entry.SetText(windowData.TrainData)
-	button.OnClicked(func(*ui.Button) {
-		filename := ui.OpenFile(mainwin)
-		if filename == "" {
-			filename = "No File Selected"
-		}
-		entry.SetText(filename)
-		windowData.TrainData = filename
-	})
-	grid.Append(button,
-		0, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-	grid.Append(entry,
-		1, 0, 1, 1,
-		true, ui.AlignFill, false, ui.AlignFill)
-
-	button1 := ui.NewButton("Test Data")
-	entry1 := ui.NewEntry()
-	entry1.SetReadOnly(true)
-	entry1.SetText(windowData.TestData)
-	button1.OnClicked(func(*ui.Button) {
-		filename := ui.OpenFile(mainwin)
-		if filename == "" {
-			filename = "No File Selected"
-		}
-		entry1.SetText(filename)
-		windowData.TestData = filename
-	})
-	grid.Append(button1,
-		0, 1, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-	grid.Append(entry1,
-		1, 1, 1, 1,
-		true, ui.AlignFill, false, ui.AlignFill)
-	modelCount = windowData.ModelCount
-	for i := 0; i < windowData.ModelCount; i++ {
-		m := makeModelParam(windowData.Models[i])
-		grid.Append(m,
-			0, i+2, 2, 1,
-			true, ui.AlignFill, false, ui.AlignFill)
-	}
-	return grid
-}
-
-//Import Config, etc on the top
-func makeToolbar2() ui.Control {
-	vbox := ui.NewVerticalBox()
-	vbox.SetPadded(true)
-
-	msggrid := ui.NewGrid()
-	msggrid.SetPadded(true)
-	vbox.Append(msggrid, false)
-
-	pbar = ui.NewProgressBar()
-	pbar.SetValue(0)
-	vbox.Append(pbar, false)
-
-	grid := ui.NewGrid()
-	grid.SetPadded(true)
-	vbox.Append(grid, false)
-
-	results = ui.NewGrid()
-	results.SetPadded(true)
-	vbox.Append(results, false)
-
-	button := ui.NewButton("Import Config")
-	button.OnClicked(func(*ui.Button) {
-		filename := ui.OpenFile(mainwin)
-		if filename != "" {
-			file, _ := ioutil.ReadFile(filename)
-			temp := UIWindow{}
-			_ = json.Unmarshal([]byte(file), &temp)
-			windowData = temp
-			vbox.Delete(3)
-			vbox.Delete(2)
-			grid = generateFromState()
-			vbox.Append(grid, false)
-			results = ui.NewGrid()
-			results.SetPadded(true)
-			vbox.Append(results, false)
-			for i := 0; i < windowData.ModelCount; i++ {
-				for j := 0; j < 7; j++ {
-					s := fmt.Sprintf("%s Results - ", generateLabel((i*7)+j))
-					resList[(i*7)+j] = ui.NewLabel(s)
-					results.Append(resList[(i*7)+j],
-						0, ((i+1)*7)+j, 1, 1,
-						false, ui.AlignFill, false, ui.AlignFill)
-				}
-			}
-		}
-	})
-	msggrid.Append(button,
-		0, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-	button = ui.NewButton("Add Model")
-	button.OnClicked(func(*ui.Button) {
-		if modelCount < 5 {
-			var m ModelConfig //configuration
-			m.Name = ""
-			m.ModelID = modelCount
-			windowData.Models[modelCount] = m
-			model := makeModelParam(m)
-			grid.Append(model,
-				0, modelCount+2, 2, 1,
-				true, ui.AlignFill, false, ui.AlignFill)
-			for j := 0; j < 7; j++ {
-				s := fmt.Sprintf("%s Results - ", generateLabel((windowData.ModelCount*7)+j))
-				resList[(windowData.ModelCount*7)+j] = ui.NewLabel(s)
-				results.Append(resList[(windowData.ModelCount*7)+j],
-					0, ((windowData.ModelCount+1)*7)+j, 1, 1,
-					false, ui.AlignFill, false, ui.AlignFill)
-			}
-			modelCount++
-			windowData.ModelCount++
-		}
-	})
-	msggrid.Append(button,
-		1, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-
-	button = ui.NewButton("Save Config")
-	button.OnClicked(func(*ui.Button) {
-		filename := ui.SaveFile(mainwin)
-		file, _ := json.MarshalIndent(windowData, "", " ")
-		_ = ioutil.WriteFile(filename, file, 0644)
-	})
-	msggrid.Append(button,
-		2, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-
-	button = ui.NewButton("Clear All")
-	button.OnClicked(func(*ui.Button) {
-		temp := UIWindow{}
-		windowData = temp
-		windowData.Models = make([]ModelConfig, 5)
-		windowData.ModelCount = 0
-		pbar.SetValue(0)
-		vbox.Delete(3)
-		vbox.Delete(2)
-		grid = generateFromState()
-		vbox.Append(grid, false)
-		results = ui.NewGrid()
-		results.SetPadded(true)
-		vbox.Append(results, false)
-	})
-	msggrid.Append(button,
-		3, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-
-	//button "Run Models"
-	button = ui.NewButton("Run Models")
-	button.OnClicked(func(*ui.Button) {
-		for i := 0; i < windowData.ModelCount; i++ {
-			for j := 0; j < 7; j++ {
-				s := fmt.Sprintf("%s Results - ", generateLabel((i*7)+j))
-				resList[(i*7)+j].SetText(s)
-			}
-		}
-		//go launchServers(7 * windowData.ModelCount)
-		pbar.SetValue(-1)
-	})
-	msggrid.Append(button,
-		4, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-
-	button = ui.NewButton("Training Data")
-	entry := ui.NewEntry()
-	entry.SetReadOnly(true)
-	//When clicked "Run Models"
-	button.OnClicked(func(*ui.Button) {
-		filename := ui.OpenFile(mainwin)
-		if filename == "" {
-			filename = "No File Selected"
-		}
-		x := parseCSV(filename)
-		if len(x) != 0 {
-			entry.SetText(filename)
-			windowData.TrainData = filename
-		} else {
-			ui.MsgBoxError(mainwin,
-				"Error",
-				"CSV not provided or improperly formatted.")
-			entry.SetText("No File Selected")
-		}
-
-	})
-	grid.Append(button,
-		0, 0, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-	grid.Append(entry,
-		1, 0, 1, 1,
-		true, ui.AlignFill, false, ui.AlignFill)
-
-	button1 := ui.NewButton("Test Data")
-	entry1 := ui.NewEntry()
-	entry1.SetReadOnly(true)
-	button1.OnClicked(func(*ui.Button) {
-		filename := ui.OpenFile(mainwin)
-		if filename == "" {
-			filename = "No File Selected"
-		}
-		x := parseCSV(filename)
-		if len(x) != 0 {
-			entry1.SetText(filename)
-			windowData.TestData = filename
-		} else {
-			ui.MsgBoxError(mainwin,
-				"Error",
-				"CSV not provided or improperly formatted.")
-			entry1.SetText("No File Selected")
-		}
-	})
-	grid.Append(button1,
-		0, 1, 1, 1,
-		false, ui.AlignFill, false, ui.AlignFill)
-	grid.Append(entry1,
-		1, 1, 1, 1,
-		true, ui.AlignFill, false, ui.AlignFill)
-
-	return vbox
-}
-
-//Handles open and close of main window
-func setupUI() {
-	mainwin = ui.NewWindow("Distributed Neural Network", 1200, 900, true)
-	windowData.Models = make([]ModelConfig, 5)
-	windowData.ModelCount = 0
-	mainwin.OnClosing(func(*ui.Window) bool {
-		ui.Quit()
-		return true
-	})
-	ui.OnShouldQuit(func() bool {
-		mainwin.Destroy()
-		return true
-	})
-	mainwin.SetMargined(true)
-	mainwin.SetChild(makeToolbar2())
-
-	mainwin.Show()
 }
 
 func parseCSV(path string) [][][]float64 {
@@ -676,46 +126,23 @@ func parseCSV(path string) [][][]float64 {
 	return data
 }
 
-//Creates the labels for Double Epoch, Half Epoch, etc.
-func generateLabel(id int) string {
-	num1 := (id / 7) + 1
-	num2 := id % 7
-	s := ""
-	if num2 == 0 {
-		s = fmt.Sprintf("#%d Default", num1)
-	} else if num2 == 1 {
-		s = fmt.Sprintf("#%d Double Epoch", num1)
-	} else if num2 == 2 {
-		s = fmt.Sprintf("#%d Half Epoch", num1)
-	} else if num2 == 3 {
-		s = fmt.Sprintf("#%d Double Learning Rate", num1)
-	} else if num2 == 4 {
-		s = fmt.Sprintf("#%d Half Learning Rate", num1)
-	} else if num2 == 5 {
-		s = fmt.Sprintf("#%d Double Momentum", num1)
-	} else if num2 == 6 {
-		s = fmt.Sprintf("#%d Half Momentum", num1)
-	}
-	return s
-}
-
 // Runs a basic neural network
-//func runNN(m ModelConfig, train [][][]float64, test [][][]float64) {
-//func runNN(m ModelConfig, train []tensor.Tensor, test []tensor.Tensor) {
-func objective(trial goptuna.Trial) (float64, error) {
-	/*hidden := make([]int, m.NumHiddenLayers)
-	for j := 0; j < m.NumHiddenLayers; j++ {
+/*func objective(trial goptuna.Trial) (float64, error) {
+	train := parseCSV("data/mnist_train.csv")
+	test := parseCSV("data/mnist_test.csv")
+
+	NumHiddenLayers, _ := trial.SuggestInt("HiddenLayers", 2, 16)
+	NumEpochs, _ := trial.SuggestInt("Epochs", 1, 10) //10,50
+	LearningRate, _ := trial.SuggestFloat("LearningRate", 1e-5, 1e-1)
+	Momentum, _ := trial.SuggestFloat("Momentum", 1e-5, 1e-1)
+	hidden := make([]int, NumHiddenLayers)
+	for j := 0; j < NumHiddenLayers; j++ {
 		hidden[j] = 32
 	}
 	nn := gonet.New(len(train[0][0]), hidden, len(train[0][1]), true)
 
-	// Train the network, use epochs, learning rate, and momentum factor from UI
-	timer := time.Now()
-	nn.Train(train, m.NumEpochs, m.LearningRate, m.Momentum, true)
-	s := fmt.Sprintf("%s Results - ", generateLabel(m.ModelID))
-	runtime := fmt.Sprintf("Runtime: %.5f s, ", time.Since(timer).Seconds())
+	nn.Train(train, NumEpochs, LearningRate, Momentum, false)
 
-	// Predict
 	totalcorrect := 0.0
 	for i := 0; i < len(test); i++ {
 		if MinMax(test[i][1]) == MinMax(nn.Predict(test[i][0])) {
@@ -724,41 +151,27 @@ func objective(trial goptuna.Trial) (float64, error) {
 	}
 
 	acc := fmt.Sprintf("Accuracy: %.2f%%", totalcorrect/float64(len(test))*100.0)
-	s = s + runtime + acc
+	fmt.Println(acc)
+	return float64(totalcorrect / float64(len(test)) * 100.0), nil
+}*/
 
-	fmt.Println(s)
-	ui.QueueMain(func() {
-		resList[m.ModelID].SetText(s)
-	})*/
-
+func objective(trial goptuna.Trial) (float64, error) {
 	////////////////////////////////////////////////////////////////////////////
 	trainX, trainY, err := mnist.Load("train", "./testdata", g.Float32)
 	require.NoError(err)
-	//x := train[0]
-	//y := train[1]
 
 	exampleSize := trainX.Shape()[0]
-	//log.Infov("exampleSize", exampleSize)
 
 	testX, testY, err := mnist.Load("test", "./testdata", g.Float32)
 	require.NoError(err)
-	//testX := test[0]
-	//testY := test[1]
-
-	//log.Infov("x example shape", x.Shape())
-	//log.Infov("y example shape", y.Shape())
 
 	batchSize, _ := trial.SuggestInt("batchSize", 4, 128)
-	//log.Infov("batchsize", batchSize)
 
 	batches := exampleSize / batchSize
-	//log.Infov("num batches", batches)
 
 	xi := mo.NewInput("x", []int{1, 1, 28, 28})
-	//log.Infov("x input shape", xi.Shape())
 
 	yi := mo.NewInput("y", []int{1, 10})
-	//log.Infov("y input shape", yi.Shape())
 
 	model, err := mo.NewSequential("mnist")
 	require.NoError(err)
@@ -778,14 +191,14 @@ func objective(trial goptuna.Trial) (float64, error) {
 	var optimizer g.Solver
 	solverName, _ := trial.SuggestCategorical("solver", []string{"Adam", "RMS", "Vanilla"})
 	if solverName == "Adam" {
-		optimizer = g.NewAdamSolver()
+		optimizer = g.NewAdamSolver(g.WithBatchSize(float64(batchSize)))
 	} else if solverName == "RMS" {
 		optimizer = g.NewRMSPropSolver(g.WithBatchSize(float64(batchSize)))
 	} else if solverName == "Vanilla" {
 		learnRate, _ := trial.SuggestFloat("learnRate", 1e-5, 1e-1)
 		optimizer = g.NewVanillaSolver(g.WithLearnRate(learnRate))
 	}
-	numEpochs, _ := trial.SuggestInt("numEpochs", 1, 3)
+	numEpochs, _ := trial.SuggestInt("numEpochs", 1, 2)
 	err = model.Compile(xi, yi,
 		mo.WithOptimizer(optimizer),
 		mo.WithLoss(mo.CrossEntropy),
@@ -829,9 +242,6 @@ func objective(trial goptuna.Trial) (float64, error) {
 	s = s + runtime + accu
 
 	fmt.Println(s)
-	/*ui.QueueMain(func() {
-		resList[m.ModelID].SetText(s)
-	})*/
 	return float64(acc), nil
 }
 
@@ -907,12 +317,11 @@ func MinMax(array []float64) int {
 
 //!!!MAIN!!!
 func main() {
-	//go launchServers(6 * windowData.ModelCount)
 	fmt.Println("main")
-	pruner, _ := successivehalving.NewPruner(
-		successivehalving.OptionReductionFactor(3))
+	pruner, _ := successivehalving.NewPruner(successivehalving.OptionReductionFactor(3))
 	study, _ := goptuna.CreateStudy(
 		"gorgonia-mnist",
+		//goptuna.StudyOptionSampler(goptuna.NewRandomSampler()),
 		goptuna.StudyOptionSampler(tpe.NewSampler()),
 		goptuna.StudyOptionPruner(pruner),
 		goptuna.StudyOptionDirection(goptuna.StudyDirectionMaximize),
@@ -924,21 +333,19 @@ func main() {
 	fmt.Println("before launch servers")
 	finished := make(chan bool)
 	start := time.Now()
-	launchServers(finished, 6, eg, study)
+	launchServers(finished, 10, eg, study)
 	fmt.Printf("Runtime: %.5f s, \n", time.Since(start).Seconds())
-	//fin := <-finished
-	//if fin {
 	v, _ := study.GetBestValue()
 	params, _ := study.GetBestParams()
 	fmt.Printf("Best evaluation=%f\n", v)
-	fmt.Printf("Solver: %s\n", params["solver"].(string))
+	/*fmt.Printf("Solver: %s\n", params["solver"].(string))
 	if params["solver"].(string) == "Vanilla" {
 		fmt.Printf("Learning rate (vanilla): %f\n", params["vanilla_learning_rate"].(float64))
-	}
-	fmt.Printf("Epochs: %d\n", params["numEpochs"].(int))
-	fmt.Printf("Batch Size: %d\n", params["batchSize"].(int))
-	//}
-	//ui.Main(setupUI)
+	}*/
+	fmt.Printf("Epochs: %d\n", params["Epochs"].(int))
+	fmt.Printf("Hidden Layers: %d\n", params["HiddenLayers"].(int))
+	fmt.Printf("Learning Rate: %f\n", params["LearningRate"].(float64))
+	fmt.Printf("Momentum: %f\n", params["Momentum"].(float64))
 }
 
 // ------------------------------ PAXOS ------------------------------------
@@ -964,8 +371,6 @@ type MasterData struct {
 	hb2             []chan [][]int64
 	//test            []chan [][][]float64
 	//training        []chan [][][]float64
-	test     []chan []tensor.Tensor
-	training []chan []tensor.Tensor
 }
 
 // Launches nodes and creates MasterData structure
@@ -980,10 +385,6 @@ func launchServers(finished chan bool, numW int, eg *errgroup.Group, study *gopt
 	mrData.replies = make([]chan string, mrData.numWorkers)      // master <- worker : worker reply for task completion
 	mrData.corpses = make(chan []bool, mrData.numWorkers)        // master <- heartbeat : workers that have died
 	mrData.working = make([]string, mrData.numWorkers)           // which tasks assigned to which workers
-	//mrData.training = make([]chan [][][]float64, mrData.numWorkers)
-	//mrData.test = make([]chan [][][]float64, mrData.numWorkers)
-	mrData.training = make([]chan []tensor.Tensor, mrData.numWorkers)
-	mrData.test = make([]chan []tensor.Tensor, mrData.numWorkers)
 
 	var hb1 = make([]chan [][]int64, mrData.numWorkers+3) // heartbeat channels to neighbors for read
 	var hb2 = make([]chan [][]int64, mrData.numWorkers+3) // heartbeat channels to neighbors for write
@@ -1003,10 +404,6 @@ func launchServers(finished chan bool, numW int, eg *errgroup.Group, study *gopt
 		mrData.replies[k] = make(chan string)
 		mrData.working[k] = ""
 		mrData.commands[k] = make(chan string)
-		//mrData.training[k] = make(chan [][][]float64)
-		//mrData.test[k] = make(chan [][][]float64)
-		mrData.training[k] = make(chan []tensor.Tensor)
-		mrData.test[k] = make(chan []tensor.Tensor)
 	}
 
 	// initialize shadowMasters
@@ -1016,44 +413,6 @@ func launchServers(finished chan bool, numW int, eg *errgroup.Group, study *gopt
 	mrData.toShadowMasters = make([]chan string, numShadowMasters)
 	for j := 0; j < numShadowMasters; j++ {
 		mrData.toShadowMasters[j] = make(chan string, 10)
-	}
-
-	for i := 0; i < windowData.ModelCount; i++ {
-		if windowData.Models[i].Name != "" {
-			vanilla := windowData.Models[i]
-			vanilla.ModelID = i * 7
-			mrData.models = append(mrData.models, vanilla)
-
-			doubleEpoch := windowData.Models[i]
-			doubleEpoch.NumEpochs *= 2
-			doubleEpoch.ModelID = (i * 7) + 1
-			mrData.models = append(mrData.models, doubleEpoch)
-
-			/*halfEpoch := windowData.Models[i]
-			halfEpoch.NumEpochs /= 2
-			halfEpoch.ModelID = (i * 7) + 2
-			mrData.models = append(mrData.models, halfEpoch)*/
-
-			doubleLearningRate := windowData.Models[i]
-			doubleLearningRate.LearningRate *= 2
-			doubleLearningRate.ModelID = (i * 7) + 2
-			mrData.models = append(mrData.models, doubleLearningRate)
-
-			halfLearningRate := windowData.Models[i]
-			halfLearningRate.LearningRate /= 2
-			halfLearningRate.ModelID = (i * 7) + 3
-			mrData.models = append(mrData.models, halfLearningRate)
-
-			doubleMomentum := windowData.Models[i]
-			doubleMomentum.Momentum *= 2
-			doubleMomentum.ModelID = (i * 7) + 4
-			mrData.models = append(mrData.models, doubleMomentum)
-
-			halfMomentum := windowData.Models[i]
-			halfMomentum.Momentum /= 2
-			halfMomentum.ModelID = (i * 7) + 5
-			mrData.models = append(mrData.models, halfMomentum)
-		}
 	}
 
 	// start nodes
@@ -1070,9 +429,6 @@ func launchServers(finished chan bool, numW int, eg *errgroup.Group, study *gopt
 		case reply := <-endrun:
 			if reply == "end" {
 				fmt.Println("end launchservers")
-				/*ui.QueueMain(func() {
-					pbar.SetValue(0)
-				})*/
 				return
 			}
 		}
@@ -1118,7 +474,7 @@ func master(finished chan bool, eg *errgroup.Group, study *goptuna.Study, mrData
 				//go worker(mrData.training[k], mrData.test[k], mrData.request[k], mrData.commands[k], mrData.replies[k], hb1, hb2, k)
 				fmt.Println("launch worker from masterhb")
 				go worker(finished, eg, study, mrData.request[k], mrData.commands[k], mrData.replies[k], hb1, hb2, k)
-				message = fmt.Sprintf("launch worker %s", k)
+				message = fmt.Sprintf("launch worker %d", k)
 				mrData.log = append(mrData.log, currentStep) //appends launch worker step to log
 				mrData.toShadowMasters[0] <- message         //sends launch worker message to first Shadow Master channel
 				mrData.toShadowMasters[1] <- message         //sends launch worker message to second Shadow Master channel
@@ -1129,51 +485,10 @@ func master(finished chan bool, eg *errgroup.Group, study *goptuna.Study, mrData
 			mrData.toShadowMasters[1] <- currentStep     //sends load message to second Shadow Master channel
 
 		} else if currentStep == "step working" {
-			// manage the distributeTasks step
-			//x, y, err := mnist.Load("train", "./testdata", g.Float32)
-			//testX, testY, err := mnist.Load("test", "./testdata", g.Float32)
 			fmt.Println("step working")
-			/*train := make([]tensor.Tensor, 2)
-			trainInput, trainTarget, err := mnist.Load("train", "./testdata", g.Float32)
-			require.NoError(err)
-			train[0] = trainInput
-			train[1] = trainTarget*/
-
-			//exampleSize := trainInput.Shape()[0]
-			//log.Infov("exampleSize", exampleSize)
-
-			/*fmt.Println("before make test")
-			test := make([]tensor.Tensor, 2)
-			testInput, testTarget, err := mnist.Load("test", "./testdata", g.Float32)
-			require.NoError(err)
-			test[0] = testInput
-			test[1] = testTarget*/
-			/*trainingdata := parseCSV(windowData.TrainData)
-			testdata := parseCSV(windowData.TestData)
-			if len(trainingdata) == 0 || len(testdata) == 0 {
-				ui.MsgBoxError(mainwin,
-					"Error",
-					"CSV not provided or improperly formatted.")
-				ui.QueueMain(func() {
-					pbar.SetValue(0)
-				})
-				currentStep = "step cleanup"
-				mrData.log = append(mrData.log, currentStep) //appends master distributeTasks step to log
-				mrData.toShadowMasters[0] <- currentStep     //sends distributeTasks message to first Shadow Master channel
-				mrData.toShadowMasters[1] <- currentStep     //sends distributeTasks message to second Shadow Master channel
-				break
-			}*/
-			/*fmt.Println("before for")
-			for k := 0; k < mrData.numWorkers; k++ {
-				mrData.training[k] <- train
-				mrData.test[k] <- test
-			}
-			fmt.Println("after for")*/
-			fmt.Println("before dt")
 			doneDist := make(chan bool)
 			mrData = distributeTasks(doneDist, finished, eg, study, mrData)
 			fmt.Println("after dt")
-			//done := <-doneDist
 			currentStep = "step cleanup"
 			mrData.log = append(mrData.log, currentStep) //appends master distributeTasks step to log
 			mrData.toShadowMasters[0] <- currentStep     //sends distributeTasks message to first Shadow Master channel
@@ -1215,28 +530,9 @@ func distributeTasks(doneDist chan bool, finished chan bool, eg *errgroup.Group,
 	for loop {
 		for i := 0; i < mrData.numWorkers; i++ {
 			// checks for available workers
-			//fmt.Println("first")
 			if mrData.working[i] == "" {
-				//for j := 0; j < 1; j++ {
-				//fmt.Println("second")
-				//mrData.commands[i] <- "m"
-				//mrData.working[i] = "running"
-				//fmt.Println("after send m")
-				/*for j := 0; j < len(mrData.models); j++ {
-					//for each not-working worker, find the first model that has not started and start it
-					fmt.Println("first ")
-					if mrData.finished[j] == "not started" {
-						fmt.Println("starting worker")
-						mrData.finished[j] = "started"
-						mrData.request[i] <- (mrData.models[j])
-						mrData.commands[i] <- "m"
-						mrData.working[i] = strconv.Itoa(j)
-						break
-					}
-				}*/
 			}
 			// checks for replies and dead workers
-			//fmt.Println("select")
 			select {
 			case message := <-mrData.replies[i]:
 				fmt.Println(message)
@@ -1294,22 +590,8 @@ func worker(finished chan bool, eg *errgroup.Group, study *goptuna.Study, fromma
 	//fmt.Println("worker")
 	killHB := make(chan string, 1)
 	go heartbeat(hb1, hb2, k, killHB)
-	//fmt.Println("after worker hb")
-	//var trainingdata [][][]float64
-	//var testdata [][][]float64
-	//var trainingdata []tensor.Tensor
-	//var testdata []tensor.Tensor
-	//var indivModel ModelConfig
-	//trainingdata = <-train
-	//testdata = <-test
-	//indivModel = <-frommaster
 	for {
-		//fmt.Println("For inside worker")
 		select {
-		/*case trainingdata = <-train:
-			continue
-		case testdata = <-test:
-			continue*/
 		case task := <-commands:
 			tasks := strings.Split(task, "_")
 			if tasks[0] == "end" {
@@ -1318,19 +600,14 @@ func worker(finished chan bool, eg *errgroup.Group, study *goptuna.Study, fromma
 				return
 			}
 			if tasks[0] == "m" {
-				//if indivModel.NumHiddenLayers > 1 {
-				//}
-				//runNN(indivModel, trainingdata, testdata)
 				eg.Go(func() error {
-					return study.Optimize(objective, 5)
+					return study.Optimize(objective, 10) //20
 				})
 				if err := eg.Wait(); err != nil {
 					log.Fatal("Optimize error", err)
 				}
 				reply <- strconv.Itoa(k) + "_" + "empty"
-				//finished <- true
 			}
-			//reply <- strconv.Itoa(k) + "_" + strconv.Itoa(indivModel.ModelID)
 		default:
 		}
 	}
@@ -1481,10 +758,7 @@ func masterHeartbeat(finished chan bool, eg *errgroup.Group, study *goptuna.Stud
 		default:
 		}
 		time.Sleep(100 * time.Millisecond)
-		//fmt.Println("master update hb")
 		currentTable = updateTable(k, previousTable, counter, hb1, hb2)
-		//fmt.Println("master after updatetable")
-		//k=numWorkers
 		//checks all, including self to see if >15ms since last heartbeat --> dead process
 		for i := 0; i < numWorkers+3; i++ {
 			if currentTable[k][1]-previousTable[i][1] > 15 { // i is dead
@@ -1498,11 +772,8 @@ func masterHeartbeat(finished chan bool, eg *errgroup.Group, study *goptuna.Stud
 				}
 			}
 		}
-		//fmt.Println("after check shadow")
 		previousTable = currentTable
-		//fmt.Println("before deadworkers")
 		corpses <- deadWorkers
-		//fmt.Println("after deadworkers")
 		counter++
 	}
 }
