@@ -21,17 +21,26 @@ import (
 
 	"gorgonia.org/tensor"*/
 
-	"test/go/pkg/mod/github.com/c-bata/goptuna@v0.8.1/successivehalving"
+	"test/go/pkg/mod/github.com/stretchr/testify@v1.6.1/require"
 
 	_ "github.com/andlabs/ui/winmanifest"
 	"github.com/aunum/log"
 
 	//"gorgonia.org/gorgonia/examples/mnist"
+	"mnist"
+
 	"github.com/c-bata/goptuna"
+	"github.com/c-bata/goptuna/successivehalving"
 	"github.com/c-bata/goptuna/tpe"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/dathoangnd/gonet"
+	"github.com/aunum/gold/pkg/v1/common/num"
+	"github.com/aunum/gold/pkg/v1/dense"
+	"github.com/aunum/goro/pkg/v1/layer"
+	mo "github.com/aunum/goro/pkg/v1/model"
+	"github.com/aunum/log"
+	g "gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 type UIWindow struct {
@@ -118,7 +127,7 @@ func parseCSV(path string) [][][]float64 {
 }
 
 // Runs a basic neural network
-func objective(trial goptuna.Trial) (float64, error) {
+/*func objective(trial goptuna.Trial) (float64, error) {
 	train := parseCSV("data/mnist_train.csv")
 	test := parseCSV("data/mnist_test.csv")
 
@@ -144,9 +153,9 @@ func objective(trial goptuna.Trial) (float64, error) {
 	acc := fmt.Sprintf("Accuracy: %.2f%%", totalcorrect/float64(len(test))*100.0)
 	fmt.Println(acc)
 	return float64(totalcorrect / float64(len(test)) * 100.0), nil
-}
+}*/
 
-/*func objective(trial goptuna.Trial) (float64, error) {
+func objective(trial goptuna.Trial) (float64, error) {
 	////////////////////////////////////////////////////////////////////////////
 	trainX, trainY, err := mnist.Load("train", "./testdata", g.Float32)
 	require.NoError(err)
@@ -234,9 +243,9 @@ func objective(trial goptuna.Trial) (float64, error) {
 
 	fmt.Println(s)
 	return float64(acc), nil
-}*/
+}
 
-/*func evaluate(x, y *tensor.Dense, model *mo.Sequential, batchSize int) (acc, loss float32, err error) {
+func evaluate(x, y *tensor.Dense, model *mo.Sequential, batchSize int) (acc, loss float32, err error) {
 	exampleSize := x.Shape()[0]
 	batches := exampleSize / batchSize
 
@@ -271,9 +280,9 @@ func objective(trial goptuna.Trial) (float64, error) {
 	loss = float32(lossVal.Scalar())
 	acc = num.Mean(accuracies)
 	return
-}*/
+}
 
-/*func accuracy(yHat, y *tensor.Dense, model mo.Model) (float32, error) {
+func accuracy(yHat, y *tensor.Dense, model mo.Model) (float32, error) {
 	yMax, err := y.Argmax(1)
 	require.NoError(err)
 
@@ -291,7 +300,7 @@ func objective(trial goptuna.Trial) (float64, error) {
 	}
 
 	return float32(numTrue.Data().(int)) / float32(len), nil
-}*/
+}
 
 // Finds the index of max value in an array
 func MinMax(array []float64) int {
