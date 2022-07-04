@@ -1,0 +1,26 @@
+{
+ "TrainData": "C:\\Users\\jziya.DESKTOP-02Q23DA\\Desktop\\goro-dist\\main\\data\\mnist_train.csv",
+ "TestData": "C:\\Users\\jziya.DESKTOP-02Q23DA\\Desktop\\goro-dist\\main\\data\\mnist_test.csv",
+ "Model": {
+  "ModelID": 0,
+  "Name": "Bayesian",
+  "NumTrials": 20,
+  "NumNodes": 5,
+  "Study": {
+   "ID": 1,
+   "Storage": {},
+   "Sampler": {},
+   "RelativeSampler": null,
+   "Pruner": {
+    "MinResource": 1,
+    "ReductionFactor": 3,
+    "MinEarlyStoppingRate": 0
+   }
+  },
+  "ErrGroup": {},
+  "NumHiddenLayers": 0,
+  "NumEpochs": 0,
+  "LearningRate": 0,
+  "Momentum": 0
+ }
+}
