@@ -1,4 +1,5 @@
 
+  
 <div id="top"></div>
 <!--
 *** Thanks for checking out the Best-README-Template. If you have a suggestion
@@ -95,6 +96,7 @@ All major languages and libraries used are listed below:
 ```sh
   cd xsede_empower/main && go run App.go
   ```
+There are provided example train and test csv datasets in the main/data directory. Due to the file size limit of github, these datasets are extremely small and will result in very poor accuracy.
 ### Modifying
 This application is currently set up to optimize training MNIST using the Gonet library.
 To use with other machine learning libraries such as Gorgoni or for optimizing other functions, the objective function can be modified:
