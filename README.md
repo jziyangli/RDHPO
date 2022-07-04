@@ -19,14 +19,6 @@
   <p align="center">
     Reliable Distributed Hyper Parameter Optimization for Deep Learning
     <br />
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
-  </p>
 </div>
 
 
@@ -36,7 +28,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#abstract">Abstract</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
       </ul>
@@ -44,14 +36,10 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
@@ -83,34 +71,19 @@ All major languages and libraries used are listed below:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
 ### Installation
-
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
-
-1. Clone the repo
-   ```sh
+1. Make sure GoLang is at least version 1.17.8 (This has not been tested with any earlier versions)
+```sh
+  go version
+  ```
+2. Install required packages:
+```sh
+  go get github.com/andlabs/ui github.com/andlabs/ui/winmanifest github.com/c-bata/goptuna github.com/c-bata/goptuna/successivehalving github.com/c-bata/goptuna/tpe golang.org/x/sync/errgroup github.com/dathoangnd/gonet
+  ```
+3. Clone the repo
+```sh
    git clone https://github.com/jziyangli/xsede_empower.git
    ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
-
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
@@ -118,29 +91,29 @@ _Below is an example of how you can instruct your audience on installing and set
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
+### Running
+```sh
+  cd xsede_empower/main && go run App.go
+  ```
+### Modifying
+This application is currently set up to optimize training MNIST using the Gonet library.
+To use with other machine learning libraries such as Gorgoni or for optimizing other functions, the objective function can be modified:
+```go
+  func  objective(trial goptuna.Trial) (float64, error)
+  ```
+It might also be useful to modify to the parseCSV function:
+```go
+  func  parseCSV(path string) [][][]float64
+  ```
+  
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
 
 John Li - jzl011@ucsd.edu
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Paper Link: 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -149,16 +122,8 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/yo
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
+Thanks to my mentor Maria Pantoja for guiding me through this project.
+Additional thanks to the XSEDE EMPOWER program for funding my research and conferences.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
